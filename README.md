@@ -67,8 +67,6 @@ per ciascuna.
 
 ## Cosa cambia nella versione ottimizzata
 
-Due modifiche, tutte nel mio codice, la libreria non viene toccata.
-
 1. **Un blocco per colonna.** Invece di lasciare che `PickParams` scelga una
    matrice quadrata, uso `PickParamsGivenDimensions` con M = numero di blocchi
    colonne e L = K × 7 righe, e metto le entry del blocco j in verticale nella
@@ -80,10 +78,7 @@ Due modifiche, tutte nel mio codice, la libreria non viene toccata.
    `H·s`, stesso arrotondamento) ma su tutte le righe della risposta invece che
    su una. Restituisce le K entry del blocco.
 
-Risultato: una query sola per blocco. Il server fa lo stesso calcolo di prima
-e la query è cifrata allo stesso modo, quindi la privacy non cambia. L'unica
-cosa che cresce è l'hint, che passa da 4 a 29 milioni di numeri, ma si scarica
-una volta sola.
+Risultato: una query sola per blocco
 
 ## Tempi
 
@@ -116,11 +111,3 @@ soglia il programma usa 7,5 GB di RAM.
 Una soglia ragionevole è 64 KB: tiene il 93% dei blocchi e la query sta sotto
 i 100 ms. Oltre, ogni raddoppio di soglia recupera pochi blocchi e raddoppia il
 padding.
-
-## Cosa manca
-
-- Client e server sono nello stesso processo. Separarli vuol dire serializzare
-  le matrici e passarle su rete, la libreria non lo fa.
-- Hint e DB vengono ricalcolati a ogni esecuzione.
-- Il padding sul blocco più grande. Si può comprimere i blocchi (gzip o
-  msgpack) o usare slot fissi con i blocchi grandi su più colonne.
