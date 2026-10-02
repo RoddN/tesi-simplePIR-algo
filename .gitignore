@@ -1,5 +1,6 @@
 # nel repository vanno solo il codice e i blocchi senza certificato
 /*
 !/.gitignore
+!/README.md
 !/tesi-pir/
 !/blocchi_senza_cert/
