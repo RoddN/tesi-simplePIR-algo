@@ -1,0 +1,262 @@
+Working with: n=1024; db size=2^29 (l=30893, m=30895); logq=32; p=701; sigma=6.400000
+Total packed DB size is ~1075.574445 MB
+Executing SimplePIR
+Setup...
+		Offline download: 123572 KB
+Building query...
+	Elapsed: 84.735152ms
+		Online upload: 120.000000 KB
+Answering query...
+	Elapsed: 141.183982ms
+	Rate: 7618.246982 MB/s
+		Online download: 120.000000 KB
+Executing SimplePIR
+Setup...
+		Offline download: 123572 KB
+Building query...
+	Elapsed: 83.281017ms
+		Online upload: 120.000000 KB
+Answering query...
+	Elapsed: 148.483332ms
+	Rate: 7243.738609 MB/s
+		Online download: 120.000000 KB
+Executing SimplePIR
+Setup...
+		Offline download: 123572 KB
+Building query...
+	Elapsed: 83.800154ms
+		Online upload: 120.000000 KB
+Answering query...
+	Elapsed: 146.265264ms
+	Rate: 7353.587690 MB/s
+		Online download: 120.000000 KB
+Executing SimplePIR
+Setup...
+		Offline download: 123572 KB
+Building query...
+	Elapsed: 86.011471ms
+		Online upload: 120.000000 KB
+Answering query...
+	Elapsed: 149.739849ms
+	Rate: 7182.953983 MB/s
+		Online download: 120.000000 KB
+Executing SimplePIR
+Setup...
+		Offline download: 123572 KB
+Building query...
+	Elapsed: 84.607666ms
+		Online upload: 120.000000 KB
+Answering query...
+	Elapsed: 146.781157ms
+	Rate: 7327.741972 MB/s
+		Online download: 120.000000 KB
+Working with: n=1024; db size=2^29 (l=30653, m=30651); logq=32; p=701; sigma=6.400000
+Total packed DB size is ~1058.789984 MB
+Executing SimplePIR
+Setup...
+		Offline download: 122612 KB
+Building query...
+	Elapsed: 83.190874ms
+		Online upload: 119.000000 KB
+Answering query...
+	Elapsed: 140.306761ms
+	Rate: 7546.250634 MB/s
+		Online download: 119.000000 KB
+Executing SimplePIR
+Setup...
+		Offline download: 122612 KB
+Building query...
+	Elapsed: 76.616112ms
+		Online upload: 119.000000 KB
+Answering query...
+	Elapsed: 130.819776ms
+	Rate: 8093.500972 MB/s
+		Online download: 119.000000 KB
+Executing SimplePIR
+Setup...
+		Offline download: 122612 KB
+Building query...
+	Elapsed: 79.855502ms
+		Online upload: 119.000000 KB
+Answering query...
+	Elapsed: 146.251893ms
+	Rate: 7239.495930 MB/s
+		Online download: 119.000000 KB
+Executing SimplePIR
+Setup...
+		Offline download: 122612 KB
+Building query...
+	Elapsed: 87.382107ms
+		Online upload: 119.000000 KB
+Answering query...
+	Elapsed: 143.898109ms
+	Rate: 7357.914510 MB/s
+		Online download: 119.000000 KB
+Executing SimplePIR
+Setup...
+		Offline download: 122612 KB
+Building query...
+	Elapsed: 83.139932ms
+		Online upload: 119.000000 KB
+Answering query...
+	Elapsed: 130.908735ms
+	Rate: 8088.001035 MB/s
+		Online download: 119.000000 KB
+Working with: n=1024; db size=2^29 (l=30653, m=30651); logq=32; p=701; sigma=6.400000
+Total packed DB size is ~1058.789984 MB
+matrice: L = 30653, M = 30651, p = 701, Ne = 7
+blocco 0: originale a3733aa44a8e9edb, nel DB a3733aa44a8e9edb
+blocco 1: originale 106c47e360a583b1, nel DB 106c47e360a583b1
+blocco 134217727: originale 3e9ecaeba1270c69, nel DB 3e9ecaeba1270c69
+Executing SimplePIR
+Setup...
+		Offline download: 122612 KB
+Building query...
+	Elapsed: 86.494138ms
+		Online upload: 119.000000 KB
+Answering query...
+	Elapsed: 129.977748ms
+	Rate: 8145.932673 MB/s
+		Online download: 119.000000 KB
+Executing SimplePIR
+Setup...
+		Offline download: 122612 KB
+Building query...
+	Elapsed: 83.174015ms
+		Online upload: 119.000000 KB
+Answering query...
+	Elapsed: 146.477753ms
+	Rate: 7228.333057 MB/s
+		Online download: 119.000000 KB
+Executing SimplePIR
+Setup...
+		Offline download: 122612 KB
+Building query...
+	Elapsed: 86.942824ms
+		Online upload: 119.000000 KB
+Answering query...
+	Elapsed: 130.333143ms
+	Rate: 8123.720182 MB/s
+		Online download: 119.000000 KB
+Executing SimplePIR
+Setup...
+		Offline download: 122612 KB
+Building query...
+	Elapsed: 82.361252ms
+		Online upload: 119.000000 KB
+Answering query...
+	Elapsed: 146.474892ms
+	Rate: 7228.474244 MB/s
+		Online download: 119.000000 KB
+Executing SimplePIR
+Setup...
+		Offline download: 122612 KB
+Building query...
+	Elapsed: 76.638687ms
+		Online upload: 119.000000 KB
+Answering query...
+	Elapsed: 143.647759ms
+	Rate: 7370.737918 MB/s
+		Online download: 119.000000 KB
+
+configurazione                  throughput (MB/s) answer (ms)  hint (MB) query (KB) risp. (KB)
+paper (c5n.metal)                          ~10240     100.000      121.0      121.0      121.0
+autori, 2^33 x 1 bit                 7345 ±   149     146.431      120.7      120.7      120.7
+autori, 2^27 x 64 bit                7665 ±   361     138.132      119.7      119.7      119.7
+nostri blocchi, 2^27 x 64 bit        7619 ±   424     138.959      119.7      119.7      119.7
+Working with: n=1024; db size=2^22 (l=2048, m=2048); logq=32; p=991; sigma=6.400000
+Total packed DB size is ~4.976371 MB
+Executing SimplePIR
+Setup...
+		Offline download: 8192 KB
+Building query...
+	Elapsed: 8.209539ms
+		Online upload: 8.000000 KB
+Answering query...
+	Elapsed: 988.504µs
+	Rate: 5034.244296 MB/s
+		Online download: 8.000000 KB
+Executing SimplePIR
+Setup...
+		Offline download: 8192 KB
+Building query...
+	Elapsed: 5.529552ms
+		Online upload: 8.000000 KB
+Answering query...
+	Elapsed: 1.017308ms
+	Rate: 4891.704994 MB/s
+		Online download: 8.000000 KB
+Executing SimplePIR
+Setup...
+		Offline download: 8192 KB
+Building query...
+	Elapsed: 5.710451ms
+		Online upload: 8.000000 KB
+Answering query...
+	Elapsed: 1.011427ms
+	Rate: 4920.148091 MB/s
+		Online download: 8.000000 KB
+Executing SimplePIR
+Setup...
+		Offline download: 8192 KB
+Building query...
+	Elapsed: 9.038434ms
+		Online upload: 8.000000 KB
+Answering query...
+	Elapsed: 1.013441ms
+	Rate: 4910.370336 MB/s
+		Online download: 8.000000 KB
+Executing SimplePIR
+Setup...
+		Offline download: 8192 KB
+Building query...
+	Elapsed: 7.713098ms
+		Online upload: 8.000000 KB
+Answering query...
+	Elapsed: 1.027898ms
+	Rate: 4841.307818 MB/s
+		Online download: 8.000000 KB
+
+configurazione                  throughput (MB/s) answer (ms)  hint (MB) query (KB) risp. (KB)
+paper (c5n.metal)                          ~10240     100.000      121.0      121.0      121.0
+autori, 2^20 x 32 bit                4920 ±    63       1.012        8.0        8.0        8.0
+
+configurazione                  throughput (MB/s) answer (ms)  hint (MB) query (KB) risp. (KB)
+paper (c5n.metal)                          ~10240     100.000      121.0      121.0      121.0
+LongRow, 2^20 x 1KB                  4400 ±     0       1.818       25.7        4.0       25.7
+
+configurazione                  throughput (MB/s) answer (ms)  hint (MB) query (KB) risp. (KB)
+paper (c5n.metal)                          ~10240     100.000      121.0      121.0      121.0
+LongRow, 2^20 x 1KB                  4811 ±     0       6.651       25.7       16.0       25.7
+
+configurazione                  throughput (MB/s) answer (ms)  hint (MB) query (KB) risp. (KB)
+paper (c5n.metal)                          ~10240     100.000      121.0      121.0      121.0
+LongRow, 2^20 x 1KB                  5711 ±     0      22.416       51.4       32.0       51.4
+
+configurazione                  throughput (MB/s) answer (ms)  hint (MB) query (KB) risp. (KB)
+paper (c5n.metal)                          ~10240     100.000      121.0      121.0      121.0
+LongRow                              4168 ±     0       1.920       25.7        4.0       25.7
+
+configurazione                  throughput (MB/s) answer (ms)  hint (MB) query (KB) risp. (KB)
+paper (c5n.metal)                          ~10240     100.000      121.0      121.0      121.0
+LongRow                              3917 ±     0       2.042       25.7        4.0       25.7
+
+configurazione                  throughput (MB/s) answer (ms)  hint (MB) query (KB) risp. (KB)
+paper (c5n.metal)                          ~10240     100.000      121.0      121.0      121.0
+LongRow                              4275 ±     0       1.872       25.7        4.0       25.7
+
+configurazione                  throughput (MB/s) answer (ms)  hint (MB) query (KB) risp. (KB)
+paper (c5n.metal)                          ~10240     100.000      121.0      121.0      121.0
+LongRow                              7278 ±     0      70.350      105.5       64.0      105.5
+
+configurazione                  throughput (MB/s) answer (ms)  hint (MB) query (KB) risp. (KB)
+paper (c5n.metal)                          ~10240     100.000      121.0      121.0      121.0
+LongRow                              7928 ±     0      64.580      105.5       64.0      105.5
+
+configurazione                  throughput (MB/s) answer (ms)  hint (MB) query (KB) risp. (KB)
+paper (c5n.metal)                          ~10240     100.000      121.0      121.0      121.0
+Algorand senza cert (N=971)          4918 ±   765       9.362      156.1        3.8      156.1
+
+configurazione                  throughput (MB/s) answer (ms)  hint (MB) query (KB) risp. (KB)
+paper (c5n.metal)                          ~10240     100.000      121.0      121.0      121.0
+Algorand senza cert (N=971)          4918 ±   869       9.364      156.1        3.8      156.1

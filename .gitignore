@@ -1,2 +1,5 @@
-tesi-pir
-lento/lento
+# nel repository vanno solo il codice e i blocchi senza certificato
+/*
+!/.gitignore
+!/tesi-pir/
+!/blocchi_senza_cert/
