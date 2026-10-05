@@ -3,3 +3,6 @@
 !/.gitignore
 !/README.md
 !/tesi-pir/
+!/estrai_blocchi.py
+!/rimuovi_cert.py
+!/summary.py
