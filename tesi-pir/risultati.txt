@@ -260,3 +260,13 @@ Algorand senza cert (N=971)          4918 ±   765       9.362      156.1       
 configurazione                  throughput (MB/s) answer (ms)  hint (MB) query (KB) risp. (KB)
 paper (c5n.metal)                          ~10240     100.000      121.0      121.0      121.0
 Algorand senza cert (N=971)          4918 ±   869       9.364      156.1        3.8      156.1
+
+configurazione                  throughput (MB/s) answer (ms)  hint (MB) query (KB) risp. (KB)
+paper (c5n.metal)                          ~10240     100.000      121.0      121.0      121.0
+Algorand senza cert (N=10761)        9359 ±  2296      53.250      156.4       42.0      156.4
+
+run1 - 2026-10-05 11:00 (warmup 2, giri 30)
+configurazione              M      L     p  answer ms     std     min       MB/s utile MB/s  hint MB query KB  risp KB setup s
+paper (README)              -      -     -       ~100       -       -     ~10240          -      121           242 tot       -
+Algorand M=10000        10000  40040   833     58.718  12.975  31.604       7887       1679    156.4     39.1    156.4    81.9
+Quadrato N=57200000     20007  20013   701     58.537  11.916  30.912       7708       7455     78.2     78.2     78.2     0.0

@@ -9,6 +9,8 @@ import (
 	"math/rand/v2"
 	"os"
 	"runtime"
+	"runtime/debug"
+	"sort"
 	"time"
 
 	"github.com/ahenzinger/simplepir/pir"
@@ -22,80 +24,64 @@ const (
 
 	// soglia sugli outlier: Q3 + 1.5*IQR calcolato con summary.py
 	SOGLIA = 45789
+
+	DIR          = "../blocchi_senza_cert"
+	WARMUP       = 2  // primi giri che non conto
+	RIP          = 30 // giri misurati
+	NUM_VERIFICA = 20 // blocchi a caso da controllare prima di misurare
 )
 
-// risultato raccoglie i numeri di una configurazione per la tabella finale
+// quanti blocchi mettere nel DB, es. {10000, 20000, 40000}
+var VALORI_M = []int{10000}
+
+// nome dell'esecuzione, si puo' passare da riga di comando: go run . run2
+var etichetta = "run1"
+
 type risultato struct {
-	cfg           string
-	tput, tputStd float64 // MB/s
-	tempo         float64 // ms per Answer
-	hintMB        float64
-	upKB, downKB  float64
+	cfg                          string
+	M, K, L, P                   uint64
+	tempoMed, tempoStd, tempoMin float64 // ms
+	tput, tputUtile              float64 // MB/s
+	hintMB, upKB, downKB         float64
+	setup                        float64 // s
 }
 
 func avg(data []float64) float64 {
 	sum := 0.0
-	num := 0.0
 	for _, elem := range data {
 		sum += elem
-		num += 1.0
 	}
-	if num == 0 {
-		return 0
-	}
-	return sum / num
+	return sum / float64(len(data))
 }
 
 func stddev(data []float64) float64 {
 	m := avg(data)
 	sum := 0.0
-	num := 0.0
 	for _, elem := range data {
 		sum += math.Pow(elem-m, 2)
-		num += 1.0
 	}
-	if num == 0 {
-		return 0
-	}
-	variance := sum / num
-	return math.Sqrt(variance)
+	return math.Sqrt(sum / float64(len(data)))
 }
 
-// calcola ricava tempo di Answer e dimensioni dei messaggi dai parametri.
-// Attenzione: p.N e' la dimensione LWE (1024), non il numero di blocchi.
-func calcola(cfg string, p pir.Params, tputs []float64) risultato {
-	dimMB := math.Log2(float64(p.P)) * float64(p.L*p.M) / (8 * 1024 * 1024)
-	tput := avg(tputs)
-
-	return risultato{
-		cfg:     cfg,
-		tput:    tput,
-		tputStd: stddev(tputs),
-		tempo:   dimMB / tput * 1000,
-		hintMB:  float64(p.L*p.N*p.Logq) / 8 / 1024 / 1024,
-		upKB:    float64(p.M*p.Logq) / 8 / 1024,
-		downKB:  float64(p.L*p.Logq) / 8 / 1024,
+func mediana(data []float64) float64 {
+	c := make([]float64, len(data))
+	copy(c, data)
+	sort.Float64s(c)
+	n := len(c)
+	if n%2 == 1 {
+		return c[n/2]
 	}
+	return (c[n/2-1] + c[n/2]) / 2
 }
 
-// misura ripete la fase online nRip volte, come il benchmark degli autori.
-// RunFakePIR salta il calcolo dell'hint, che non serve per il throughput.
-func misura(pi pir.SimplePIR, DB *pir.Database, p pir.Params, idx uint64, nRip int) []float64 {
-	var tputs []float64
-
-	for j := 0; j < nRip; j++ {
-		tput, _, _, _ := pir.RunFakePIR(&pi, DB, p, []uint64{idx}, nil, false)
-		tputs = append(tputs, tput)
+func minimo(data []float64) float64 {
+	m := data[0]
+	for _, v := range data {
+		if v < m {
+			m = v
+		}
 	}
-	return tputs
-}
-
-func genera(N uint64) []uint64 {
-	blocchi := make([]uint64, N)
-	for i := range blocchi {
-		blocchi[i] = rand.Uint64()
-	}
-	return blocchi
+	return m
 }
 
 // read_blocks legge i file della cartella e scarta quelli piu' grandi della soglia
@@ -234,85 +220,176 @@ func query_block(pi pir.SimplePIR, DB *pir.Database, A pir.State, serverState pi
 	H pir.Msg, p pir.Params, K uint64, j uint64) []byte {
 
 	client, query := pi.Query(j, A, p, DB.Info)
-
-	var batch pir.MsgSlice
-	batch.Data = append(batch.Data, query)
-	answer := pi.Answer(DB, batch, serverState, A, p)
-
-	entries := recover_column(p, DB.Info, H, query, answer, client, K)
-	return unpack(entries)
+	answer := pi.Answer(DB, pir.MakeMsgSlice(query), serverState, A, p)
+	return unpack(recover_column(p, DB.Info, H, query, answer, client, K))
 }
 
-// testAlgorand costruisce il DB con i blocchi veri, controlla che il PIR
-// restituisca i blocchi giusti e poi misura le prestazioni.
-func testAlgorand(dir string, threshold int, nRip int) risultato {
-	fmt.Printf("\n--- Test Algorand su %s (soglia %d byte) ---\n", dir, threshold)
-
-	blocks := read_blocks(dir, threshold)
-	if len(blocks) == 0 {
-		panic("nessun blocco sotto la soglia")
+// salva_tempi aggiunge i tempi in fondo a tempi.csv
+// formato: etichetta,configurazione,giro,tempo_ms
+func salva_tempi(cfg string, tempi []float64) {
+	f, err := os.OpenFile("tempi.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
 	}
+	defer f.Close()
+	for i, t := range tempi {
+		fmt.Fprintf(f, "%s,%s,%d,%.4f\n", etichetta, cfg, i, t*1000)
+	}
+}
+
+// calcola mette insieme i numeri per la tabella finale.
+// Il throughput e' calcolato come nel repo: dimensione del DB / tempo di Answer.
+func calcola(cfg string, p pir.Params, K uint64, tempi []float64, utiliMB float64, setup float64) risultato {
+	dimMB := math.Log2(float64(p.P)) * float64(p.L*p.M) / (8 * 1024 * 1024)
+	med := mediana(tempi)
+
+	return risultato{
+		cfg:       cfg,
+		M:         p.M,
+		K:         K,
+		L:         p.L,
+		P:         p.P,
+		tempoMed:  med * 1000,
+		tempoStd:  stddev(tempi) * 1000,
+		tempoMin:  minimo(tempi) * 1000,
+		tput:      dimMB / med,
+		tputUtile: utiliMB / med,
+		hintMB:    float64(p.L*p.N*p.Logq) / 8 / 1024 / 1024,
+		upKB:      float64(p.M*p.Logq) / 8 / 1024,
+		downKB:    float64(p.L*p.Logq) / 8 / 1024,
+		setup:     setup,
+	}
+}
+
+// testAlgorand costruisce il DB con i primi M blocchi, fa il setup una volta,
+// controlla che il PIR restituisca i blocchi giusti e misura il tempo di Answer.
+func testAlgorand(blocks [][]byte, M int) risultato {
+	blocks = blocks[:M]
+	fmt.Printf("\n--- Test Algorand con %d blocchi ---\n", M)
 
 	pi := pir.SimplePIR{}
-	DB, p, K, M := make_DB(pi, blocks)
-	fmt.Printf("blocchi: %d, K = %d entry per blocco, matrice %d x %d\n", M, K, p.L, p.M)
+	DB, p, K, _ := make_DB(pi, blocks)
 
-	// setup vero: il server calcola l'hint H = DB * A
+	utili := 0
+	for _, b := range blocks {
+		utili += len(b)
+	}
+	fmt.Printf("K = %d, matrice %d x %d, p = %d\n", K, p.L, p.M, p.P)
+	fmt.Printf("byte utili / byte con padding = %.2f\n", float64(utili)/float64(K*8*uint64(M)))
+
+	// setup vero, una volta sola: calcola l'hint e poi comprime il DB.
+	// Da qui in poi il DB resta compresso, che e' quello che serve ad Answer.
 	start := time.Now()
 	A := pi.Init(DB.Info, p)
 	serverState, H := pi.Setup(DB, A, p)
-	fmt.Printf("setup (hint): %v\n", time.Since(start))
+	setup := time.Since(start).Seconds()
+	fmt.Printf("setup: %.2f s\n", setup)
 
-	// controllo che il blocco uscito dal PIR sia uguale all'originale
-	for _, j := range []uint64{0, M / 2, M - 1} {
-		start = time.Now()
+	// prima di misurare controllo primo, ultimo e qualche blocco a caso
+	da_controllare := []uint64{0, uint64(M - 1)}
+	for i := 0; i < NUM_VERIFICA; i++ {
+		da_controllare = append(da_controllare, rand.Uint64N(uint64(M)))
+	}
+	for _, j := range da_controllare {
 		block := query_block(pi, DB, A, serverState, H, p, K, j)
-		tempo := time.Since(start)
-
 		if !bytes.Equal(block, blocks[j]) {
 			panic(fmt.Sprintf("il blocco %d recuperato e' diverso dall'originale", j))
 		}
-		fmt.Printf("blocco %d: round %d, %d byte, OK (%v)\n", j, block_round(block), len(block), tempo)
 	}
+	fmt.Printf("controllati %d blocchi: OK (round da %d a %d)\n",
+		len(da_controllare), block_round(blocks[0]), block_round(blocks[M-1]))
 
-	// Setup ha compresso il DB in memoria: lo riporto allo stato iniziale,
-	// altrimenti RunFakePIR lo comprimerebbe una seconda volta
-	pi.Reset(DB, p)
+	// misura: cronometro solo Answer, la query la preparo prima.
+	// Tolgo il garbage collector perche' altrimenti puo' partire durante la misura.
+	debug.SetGCPercent(-1)
+	var tempi []float64
+	for r := 0; r < WARMUP+RIP; r++ {
+		j := rand.Uint64N(uint64(M))
+		client, query := pi.Query(j, A, p, DB.Info)
+		batch := pir.MakeMsgSlice(query)
 
-	tputs := misura(pi, DB, p, 0, nRip)
-	return calcola(fmt.Sprintf("Algorand senza cert (N=%d)", M), p, tputs)
+		runtime.GC()
+		start = time.Now()
+		answer := pi.Answer(DB, batch, serverState, A, p)
+		t := time.Since(start).Seconds()
+
+		// controllo anche qui che il blocco ricevuto sia quello giusto
+		block := unpack(recover_column(p, DB.Info, H, query, answer, client, K))
+		if !bytes.Equal(block, blocks[j]) {
+			panic(fmt.Sprintf("blocco %d sbagliato durante la misura", j))
+		}
+
+		if r >= WARMUP {
+			tempi = append(tempi, t)
+		}
+	}
+	debug.SetGCPercent(100)
+
+	cfg := fmt.Sprintf("Algorand M=%d", M)
+	salva_tempi(cfg, tempi)
+	return calcola(cfg, p, K, tempi, float64(utili)/1024/1024, setup)
 }
 
-// testLongRow: 2^16 record casuali da 8 KB, per confronto con i blocchi veri
-func testLongRow(nRip int) risultato {
-	logN := uint64(16)
-	numKB := uint64(8)
-	N := uint64(1 << logN)
-	bit := uint64(numKB * 1024 * 8)
+// testQuadrato serve come confronto: stesso numero di entry da 64 bit,
+// ma dati casuali e matrice quasi quadrata come nei test del repo.
+// Qui non controllo i risultati, quindi l'hint non serve e uso FakeSetup.
+func testQuadrato(N uint64) risultato {
+	fmt.Printf("\n--- Test quadrato casuale con %d entry ---\n", N)
 
 	pi := pir.SimplePIR{}
-	p := pi.PickParams(N, bit, SEC_PARAM, LOGQ)
-	DB := pir.MakeRandomDB(N, bit, &p)
+	p := pi.PickParams(N, d, SEC_PARAM, LOGQ)
+	DB := pir.MakeRandomDB(N, d, &p)
 
-	var tputs []float64
-	for j := 0; j < nRip; j++ {
-		tput, _ := pir.RunPIR(&pi, DB, p, []uint64{1})
-		tputs = append(tputs, tput)
+	A := pi.Init(DB.Info, p)
+	serverState, _ := pi.FakeSetup(DB, p) // comprime il DB senza calcolare l'hint
+
+	debug.SetGCPercent(-1)
+	var tempi []float64
+	for r := 0; r < WARMUP+RIP; r++ {
+		j := rand.Uint64N(p.M)
+		_, query := pi.Query(j, A, p, DB.Info)
+		batch := pir.MakeMsgSlice(query)
+
+		runtime.GC()
+		start := time.Now()
+		pi.Answer(DB, batch, serverState, A, p)
+		t := time.Since(start).Seconds()
+
+		if r >= WARMUP {
+			tempi = append(tempi, t)
+		}
 	}
+	debug.SetGCPercent(100)
 
-	return calcola(fmt.Sprintf("LongRow Rand (2^%d, %dKB)", logN, numKB), p, tputs)
+	cfg := fmt.Sprintf("Quadrato N=%d", N)
+	salva_tempi(cfg, tempi)
+	// dati casuali, quindi niente padding: i byte utili sono N*8
+	return calcola(cfg, p, 0, tempi, float64(N*8)/1024/1024, 0)
 }
 
 func main() {
-	var risultati []risultato
+	if len(os.Args) > 1 {
+		etichetta = os.Args[1]
+	}
 
 	fmt.Println("Avvio benchmark...")
+	blocks := read_blocks(DIR, SOGLIA)
+	fmt.Printf("%d blocchi sotto la soglia\n", len(blocks))
 
-	// runtime.GC()
-	// risultati = append(risultati, testLongRow(1))
+	var risultati []risultato
+	for _, M := range VALORI_M {
+		if M > len(blocks) {
+			fmt.Printf("salto M=%d, ci sono solo %d blocchi\n", M, len(blocks))
+			continue
+		}
 
-	runtime.GC()
-	risultati = append(risultati, testAlgorand("../blocchi_senza_cert", SOGLIA, 3))
+		runtime.GC()
+		r := testAlgorand(blocks, M)
+		risultati = append(risultati, r)
+
+		runtime.GC()
+		risultati = append(risultati, testQuadrato(r.K*uint64(M)))
+	}
 
 	// la tabella va sia a schermo sia in fondo a risultati.txt
 	f, err := os.OpenFile("risultati.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -322,16 +399,19 @@ func main() {
 	defer f.Close()
 	out := io.MultiWriter(os.Stdout, f)
 
-	fmt.Fprintln(out)
-	fmt.Fprintf(out, "%-30s %18s %11s %10s %10s %10s\n",
-		"configurazione", "throughput (MB/s)", "answer (ms)", "hint (MB)", "query (KB)", "risp. (KB)")
+	fmt.Fprintf(out, "\n%s - %s (warmup %d, giri %d)\n", etichetta, time.Now().Format("2006-01-02 15:04"), WARMUP, RIP)
+	fmt.Fprintf(out, "%-22s %6s %6s %5s %10s %7s %7s %10s %10s %8s %8s %8s %7s\n",
+		"configurazione", "M", "L", "p", "answer ms", "std", "min",
+		"MB/s", "utile MB/s", "hint MB", "query KB", "risp KB", "setup s")
 
-	// valori del paper (AWS c5n.metal, DB da 1 GB); i 100 ms sono ricavati da 1 GB / 10 GB/s
-	fmt.Fprintf(out, "%-30s %18s %11.3f %10.1f %10.1f %10.1f\n",
-		"paper (c5n.metal)", "~10240", 100.0, 121.0, 121.0, 121.0)
+	// valori dal README (AWS c5n.metal, DB da 1 GB). 100 ms = 1 GB / 10 GB/s,
+	// 242 KB e' la comunicazione online totale (query + risposta)
+	fmt.Fprintf(out, "%-22s %6s %6s %5s %10s %7s %7s %10s %10s %8s %17s %7s\n",
+		"paper (README)", "-", "-", "-", "~100", "-", "-", "~10240", "-", "121", "242 tot", "-")
 
 	for _, r := range risultati {
-		fmt.Fprintf(out, "%-30s %10.0f ± %5.0f %11.3f %10.1f %10.1f %10.1f\n",
-			r.cfg, r.tput, r.tputStd, r.tempo, r.hintMB, r.upKB, r.downKB)
+		fmt.Fprintf(out, "%-22s %6d %6d %5d %10.3f %7.3f %7.3f %10.0f %10.0f %8.1f %8.1f %8.1f %7.1f\n",
+			r.cfg, r.M, r.L, r.P, r.tempoMed, r.tempoStd, r.tempoMin,
+			r.tput, r.tputUtile, r.hintMB, r.upKB, r.downKB, r.setup)
 	}
 }
