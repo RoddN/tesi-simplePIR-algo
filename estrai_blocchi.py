@@ -1,8 +1,8 @@
-import os 
+import os
 from algosdk.v2client import algod
 
 # data_dir = "/home/giuper/node/data1"
-out_dir = "/home/todd/VSCODE/Tesi_SimplePIR/blocchi"
+out_dir = "./Blocchi"
 
 # with open (f"{data_dir}/algod.token", "r") as f :
 #	token = f.read().strip()
@@ -18,7 +18,8 @@ token= ""
 client = algod.AlgodClient(token, url)
 status = client.status()
 last = status["last-round"]
-start = last - 20000
+numberOfBlocks = 80000
+start = last - numberOfBlocks
 
 os.makedirs(out_dir, exist_ok=True)
 print(f"Estraggo dal round {start} al {last}...")
