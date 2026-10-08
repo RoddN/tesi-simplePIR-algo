@@ -1,8 +1,27 @@
-# nel repository va solo il codice; i blocchi restano in locale
-/*
-!/.gitignore
-!/README.md
-!/tesi-pir/
-!/estrai_blocchi.py
-!/rimuovi_cert.py
-!/summary.py
+# Dipendenze e ambienti locali
+.venv/
+simplepir/
+
+# Dataset locali
+Blocchi/
+BlocchiNoCert/
+
+# Output del benchmark
+benchmark/risultati.txt
+benchmark/tempi.csv
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Go
+bin/
+*.exe
+*.test
+
+# Sistema operativo e editor
+.DS_Store
+.vscode/
+Blocchi/
+
+server/client_hint.gob
