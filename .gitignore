@@ -1,0 +1,18 @@
+# blocchi in locale
+/*
+!/.gitignore
+!/README.md
+!/go.mod
+!/go.sum
+!/benchmark/
+!/cmd/
+!/utils/
+!/utils_python/
+!/server-client/
+!/server-client-m/
+!/simplepir/
+
+# file generati
+*.gob
+/benchmark/risultati.txt
+/benchmark/tempi.csv
