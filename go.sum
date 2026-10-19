@@ -1,3 +1,5 @@
+github.com/ahenzinger/simplepir v0.0.0-20230113230609-e9020b03bf28 h1:jwSQ+ZxmMI0k7bjd0l5rpbWyrQe391EQ4AGsHJ5z/c8=
+github.com/ahenzinger/simplepir v0.0.0-20230113230609-e9020b03bf28/go.mod h1:wUm/z/sbgsopMYwGs99LqgZPzOTOCdTRu9pe28UlFh8=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
 github.com/ugorji/go/codec v1.3.2 h1:zkEASHHyEClGeURfgNT9PJZVfAbs9oEX9QXggwWNJbc=

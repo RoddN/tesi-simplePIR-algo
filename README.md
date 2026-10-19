@@ -1,31 +1,44 @@
 # tesi-simplePIR-algo
 
-Materiale di lavoro per la tesi: recupero privato di blocchi Algorand con SimplePIR.
+Codice tesi per il recupero privato di blocchi Algorand con SimplePIR.
 
-- `benchmark/`: benchmark di SimplePIR sui blocchi (risultati in `risultati.txt` e `tempi.csv`)
-- `server-client/`: server con un solo DB e client che recupera un blocco via HTTP
-- `server-client-m/`: DB diviso in due sezioni, il client interroga entrambe (una con una query fittizia)
-- `simplepir/`: copia della libreria [SimplePIR](https://github.com/ahenzinger/simplepir), usata tramite `replace` in `go.mod`
-- `utils/`: decodifica msgpack -> JSON
-- `cmd/msgpack_tool/`: stampa un blocco msgpack come JSON
-- `utils_python/`: script per scaricare i blocchi (`estrai_blocchi.py`), togliere il certificato (`rimuovi_cert.py`) e calcolarne le statistiche (`summary.py`)
+## Struttura
 
-I blocchi (msgpack mainnet, senza certificato) non sono nel repository:
-vanno messi in `BlocchiNoCert/` nella root, il codice li legge da `../BlocchiNoCert`.
+- `blockpir/`: codice PIR in comune
+- `singledb/`: server e client con un unico database
+- `sharded/`: server e client con il database diviso in shard
+- `metrics/`: misure e scrittura dei risultati
+- `benchmark/`: benchmark di SimplePIR senza rete
+- `tools/`: script Python per preparare i blocchi e `msgpack2json`
+- `dummyrow/`: versione precedente di sharded, non più usata
 
-## Avvio
+## Dati
 
-Ogni programma va lanciato dalla sua cartella.
+I blocchi vanno in `BlocchiNoCert/`, nella root del progetto:
+
+```bash
+python3 tools/python/download_blocks.py                  # scarica i blocchi in Blocchi/
+python3 tools/python/strip_cert.py Blocchi BlocchiNoCert # toglie i certificati
+python3 tools/python/block_stats.py BlocchiNoCert        # statistiche sulle dimensioni
+```
+
+## Esecuzione
+
+Server e client in due terminali separati:
+
+```bash
+cd singledb              
+go run ./server          
+go run ./client M10k     # M10k = etichetta dei risultati
+```
+
+I parametri (numero di blocchi, shard, run, porta) sono in `config.go`.
+
+Benchmark senza rete:
 
 ```bash
 cd benchmark
-go run . [etichetta]
+go run . run1
 ```
 
-```bash
-cd server-client-m
-go run ./server_m    # aspettare "Pronto ... su http://localhost:8080"
-go run ./client_m    # in un altro terminale
-```
-
-`server-client/` funziona allo stesso modo (`go run ./server`, poi `go run ./client`).
+I risultati finiscono in `results/`.

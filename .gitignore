@@ -1,18 +1,40 @@
-# blocchi in locale
+# Nel repository va solo il codice: i blocchi restano in locale
 /*
 !/.gitignore
 !/README.md
 !/go.mod
 !/go.sum
+!/blockpir/
+!/metrics/
+!/singledb/
+!/sharded/
+!/dummyrow/
 !/benchmark/
-!/cmd/
-!/utils/
-!/utils_python/
-!/server-client/
-!/server-client-m/
-!/simplepir/
+!/tools/
 
-# file generati
+# Hint generati dal server (centinaia di MB)
 *.gob
-/benchmark/risultati.txt
-/benchmark/tempi.csv
+
+# Risultati delle misure: si portano a mano
+results/
+
+# Binari e file di build
+*.exe
+*.test
+*.out
+*.prof
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Log
+*.log
+
+# Editor e sistema
+.vscode/
+.idea/
+*.swp
+.DS_Store
