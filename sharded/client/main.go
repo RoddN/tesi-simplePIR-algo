@@ -39,14 +39,21 @@ func main() {
 		fail("%v", err)
 	}
 
-	debug.SetGCPercent(-1)
 	pi := pir.SimplePIR{}
+
+	start := time.Now()
+	A := pi.DecompressState(hint.Info, hint.Params, hint.Seed)
+	aTime := time.Since(start)
+	blockpir.ReseedPRG(pi)
+	fmt.Printf("[CLIENT] A generata dal seme in %v\n", aTime)
+
+	debug.SetGCPercent(-1)
 	total := sharded.WarmupRuns + sharded.MeasuredRuns
 	var runs []metrics.Run
 
 	for r := 0; r < total; r++ {
 		runtime.GC()
-		run, err := doQuery(pi, hint, blocks)
+		run, err := doQuery(pi, hint, A, blocks)
 		if err != nil {
 			fail("run %d: %v", r+1, err)
 		}
@@ -64,7 +71,8 @@ func main() {
 		M:          hint.NumBlocks,
 		Shards:     len(hint.H),
 		HBytes:     int64(len(hint.H)) * int64(p.L*p.N*p.Logq/8),
-		ABytes:     int64(p.M * p.N * p.Logq / 8),
+		ABytes:     int64(len(hint.Seed.Seed)),
+		ATime:      aTime,
 		WarmupRuns: sharded.WarmupRuns,
 		Setup:      hint.Stats,
 	}
@@ -74,7 +82,7 @@ func main() {
 	fmt.Printf("[CLIENT] Risultati salvati in %s/\n", sharded.ResultsDir)
 }
 
-func doQuery(pi pir.SimplePIR, hint sharded.Hint, blocks [][]byte) (metrics.Run, error) {
+func doQuery(pi pir.SimplePIR, hint sharded.Hint, A pir.State, blocks [][]byte) (metrics.Run, error) {
 	idx := rand.IntN(len(blocks))
 
 	shard := idx / hint.ShardSize
@@ -83,7 +91,7 @@ func doQuery(pi pir.SimplePIR, hint sharded.Hint, blocks [][]byte) (metrics.Run,
 
 	start := time.Now()
 
-	secret, q := pi.Query(col, hint.A, hint.Params, hint.Info)
+	secret, q := pi.Query(col, A, hint.Params, hint.Info)
 	run.Query = time.Since(start)
 
 	var body bytes.Buffer

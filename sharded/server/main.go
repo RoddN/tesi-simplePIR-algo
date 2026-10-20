@@ -52,7 +52,9 @@ func main() {
 
 	startHint := time.Now()
 
-	A = pi.Init(shards[0].Info, p)
+	var seed pir.CompressedState
+	A, seed = pi.InitCompressed(shards[0].Info, p)
+	blockpir.ReseedPRG(pi)
 	states = make([]pir.State, n)
 	H := make([]pir.Msg, n)
 	var wg sync.WaitGroup
@@ -72,7 +74,7 @@ func main() {
 	hint := sharded.Hint{
 		Params:    p,
 		Info:      shards[0].Info,
-		A:         A,
+		Seed:      seed,
 		H:         H,
 		K:         K,
 		ShardSize: size,

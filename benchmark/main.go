@@ -40,6 +40,7 @@ type result struct {
 	avgBlockKB           float64
 	setupDBTime          float64
 	setupHintTime        float64
+	clientATime          float64
 }
 
 func mean(d []float64) float64 {
@@ -97,9 +98,16 @@ func runBenchmark(blocks [][]byte, rounds []string, M int) result {
 	setupDBTime := time.Since(startDB).Seconds()
 
 	startHint := time.Now()
-	A := pi.Init(DB.Info, p)
+	A, seed := pi.InitCompressed(DB.Info, p)
+	blockpir.ReseedPRG(pi)
 	serverState, H := pi.Setup(DB, A, p)
 	setupHintTime := time.Since(startHint).Seconds()
+
+	// Il client rigenera A dal seme: la verifica sotto controlla anche che sia uguale
+	startA := time.Now()
+	A = pi.DecompressState(DB.Info, p, seed)
+	clientATime := time.Since(startA).Seconds()
+	blockpir.ReseedPRG(pi)
 
 	idx := rand.Uint64N(uint64(M))
 	secret, q := pi.Query(idx, A, p, DB.Info)
@@ -151,6 +159,7 @@ func runBenchmark(blocks [][]byte, rounds []string, M int) result {
 		avgBlockKB:    avgBlockKB,
 		setupDBTime:   setupDBTime,
 		setupHintTime: setupHintTime,
+		clientATime:   clientATime,
 	}
 }
 
@@ -187,14 +196,14 @@ func main() {
 	w := tabwriter.NewWriter(f, 0, 4, 2, ' ', 0)
 
 	fmt.Fprintf(w, "\n--- Esecuzione Benchmark: %s ---\n", label)
-	fmt.Fprintf(w, "M\tDB Size\tQuery Size\tQuery Time\tHint Size\tBlock Size\tLarge Block\tTime DB\tTime Hint\n")
+	fmt.Fprintf(w, "M\tDB Size\tQuery Size\tQuery Time\tHint Size\tBlock Size\tLarge Block\tTime DB\tTime Hint\tTime A client\n")
 
 	for _, M := range mValues {
 		runtime.GC()
 		r := runBenchmark(blocks, rounds, M)
 
-		fmt.Fprintf(w, "%d\t%.2f GB\t%.2f KB\t%.2f ms\t%.2f MB\t%.2f KB\t%.2f KB\t%.2f s\t%.2f s\n",
-			r.M, r.dbSizeGB, r.upKB, r.med, r.hintMB, r.avgBlockKB, r.largeBlockKB, r.setupDBTime, r.setupHintTime)
+		fmt.Fprintf(w, "%d\t%.2f GB\t%.2f KB\t%.2f ms\t%.2f MB\t%.2f KB\t%.2f KB\t%.2f s\t%.2f s\t%.2f s\n",
+			r.M, r.dbSizeGB, r.upKB, r.med, r.hintMB, r.avgBlockKB, r.largeBlockKB, r.setupDBTime, r.setupHintTime, r.clientATime)
 	}
 	w.Flush()
 	fmt.Printf("\nFatto, risultati in %s/\n", resultsDir)

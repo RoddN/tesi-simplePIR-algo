@@ -38,14 +38,21 @@ func main() {
 		fail("%v", err)
 	}
 
-	debug.SetGCPercent(-1)
 	pi := pir.SimplePIR{}
+
+	start := time.Now()
+	A := pi.DecompressState(hint.Info, hint.Params, hint.Seed)
+	aTime := time.Since(start)
+	blockpir.ReseedPRG(pi)
+	fmt.Printf("[CLIENT] A generata dal seme in %v\n", aTime)
+
+	debug.SetGCPercent(-1)
 	total := singledb.WarmupRuns + singledb.MeasuredRuns
 	var runs []metrics.Run
 
 	for r := 0; r < total; r++ {
 		runtime.GC()
-		run, err := doQuery(pi, hint, blocks)
+		run, err := doQuery(pi, hint, A, blocks)
 		if err != nil {
 			fail("run %d: %v", r+1, err)
 		}
@@ -63,7 +70,8 @@ func main() {
 		M:          hint.M,
 		Shards:     1,
 		HBytes:     int64(p.L * p.N * p.Logq / 8),
-		ABytes:     int64(p.M * p.N * p.Logq / 8),
+		ABytes:     int64(len(hint.Seed.Seed)),
+		ATime:      aTime,
 		WarmupRuns: singledb.WarmupRuns,
 		Setup:      hint.Stats,
 	}
@@ -73,12 +81,12 @@ func main() {
 	fmt.Printf("[CLIENT] Risultati salvati in %s/\n", singledb.ResultsDir)
 }
 
-func doQuery(pi pir.SimplePIR, hint singledb.Hint, blocks [][]byte) (metrics.Run, error) {
+func doQuery(pi pir.SimplePIR, hint singledb.Hint, A pir.State, blocks [][]byte) (metrics.Run, error) {
 	idx := rand.Uint64N(uint64(hint.M))
 	run := metrics.Run{Block: idx}
 
 	start := time.Now()
-	secret, q := pi.Query(idx, hint.A, hint.Params, hint.Info)
+	secret, q := pi.Query(idx, A, hint.Params, hint.Info)
 	run.Query = time.Since(start)
 
 	var body bytes.Buffer

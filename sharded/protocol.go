@@ -11,7 +11,7 @@ import (
 type Hint struct {
 	Params    pir.Params
 	Info      pir.DBinfo
-	A         pir.State
+	Seed      pir.CompressedState
 	H         []pir.Msg
 	K         uint64
 	ShardSize int

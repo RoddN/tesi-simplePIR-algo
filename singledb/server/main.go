@@ -45,7 +45,9 @@ func main() {
 	dbTime := time.Since(startDB)
 
 	startHint := time.Now()
-	A = pi.Init(DB.Info, p)
+	var seed pir.CompressedState
+	A, seed = pi.InitCompressed(DB.Info, p)
+	blockpir.ReseedPRG(pi)
 	var H pir.Msg
 
 	serverState, H = pi.Setup(DB, A, p)
@@ -56,7 +58,7 @@ func main() {
 	hint := singledb.Hint{
 		Params: p,
 		Info:   DB.Info,
-		A:      A,
+		Seed:   seed,
 		H:      H,
 		K:      K,
 		M:      len(blocks),

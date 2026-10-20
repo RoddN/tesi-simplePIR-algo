@@ -36,6 +36,7 @@ type Summary struct {
 	Shards     int
 	HBytes     int64
 	ABytes     int64
+	ATime      time.Duration
 	WarmupRuns int
 	Setup      SetupStats
 }
@@ -60,12 +61,12 @@ func appendSummary(dir string, s Summary, runs []Run) error {
 	w := tabwriter.NewWriter(f, 0, 4, 2, ' ', 0)
 	fmt.Fprintf(w, "\n--- %s, %s, %d run (+%d di riscaldamento) ---\n",
 		s.Label, time.Now().Format("2006-01-02 15:04"), len(runs), s.WarmupRuns)
-	fmt.Fprintln(w, "M\tShard\tUnici\tDati\tDB\tH\tA\tTempo DB\tTempo hint\tQuery\tServer\tRTT\tDecifratura\tUpload\tDownload")
+	fmt.Fprintln(w, "M\tShard\tUnici\tDati\tDB\tH\tA\tTempo DB\tTempo hint\tTempo A client\tQuery\tServer\tRTT\tDecifratura\tUpload\tDownload")
 
-	fmt.Fprintf(w, "%d\t%d\t%d\t%s\t%s\t%s\t%s\t%.2f s\t%.2f s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+	fmt.Fprintf(w, "%d\t%d\t%d\t%s\t%s\t%s\t%s\t%.2f s\t%.2f s\t%.2f s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 		s.M, s.Shards, s.Setup.UniqueBlocks,
 		size(s.Setup.RawBytes), size(s.Setup.DBBytes), size(s.HBytes), size(s.ABytes),
-		s.Setup.DBTime.Seconds(), s.Setup.HintTime.Seconds(),
+		s.Setup.DBTime.Seconds(), s.Setup.HintTime.Seconds(), s.ATime.Seconds(),
 		timing(runs, func(r Run) time.Duration { return r.Query }),
 		timing(runs, func(r Run) time.Duration { return r.Server }),
 		timing(runs, func(r Run) time.Duration { return r.RTT }),
