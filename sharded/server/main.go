@@ -46,7 +46,7 @@ func main() {
 	startDB := time.Now()
 	shards = make([]*pir.Database, n)
 	for j := range shards {
-		shards[j], p = blockpir.BuildDBWithK(pi, shardBlocks(blocks, j, size), K)
+		shards[j], p = blockpir.BuildDBWithK(pi, shardBlocks(blocks, j, size), K, uint64(n*size))
 	}
 	dbTime := time.Since(startDB)
 
@@ -114,8 +114,8 @@ func shardBlocks(blocks [][]byte, j, size int) [][]byte {
 }
 
 func handleQuery(w http.ResponseWriter, r *http.Request) {
-	var q pir.Msg
-	if err := gob.NewDecoder(r.Body).Decode(&q); err != nil {
+	var req sharded.Request
+	if err := gob.NewDecoder(r.Body).Decode(&req); err != nil || len(req.Queries) != len(shards) {
 		http.Error(w, "query non valida", http.StatusBadRequest)
 		return
 	}
@@ -129,16 +129,19 @@ func handleQuery(w http.ResponseWriter, r *http.Request) {
 			wg.Add(1)
 			go func(j int) {
 				defer wg.Done()
-				answers[j] = pi.Answer(shards[j], pir.MakeMsgSlice(q), states[j], A, p)
+				answers[j] = pi.Answer(shards[j], pir.MakeMsgSlice(req.Queries[j]), states[j], A, p)
 			}(j)
 		}
 		wg.Wait()
 	} else {
 		for j := range shards {
-			answers[j] = pi.Answer(shards[j], pir.MakeMsgSlice(q), states[j], A, p)
+			answers[j] = pi.Answer(shards[j], pir.MakeMsgSlice(req.Queries[j]), states[j], A, p)
 		}
 	}
-	resp := sharded.Response{Answers: answers, ServerTime: time.Since(start)}
+	for j := 1; j < len(answers); j++ {
+		answers[0].Data[0].MatrixAdd(answers[j].Data[0])
+	}
+	resp := sharded.Response{Answer: answers[0], ServerTime: time.Since(start)}
 
 	w.Header().Set("Content-Type", "application/octet-stream")
 	gob.NewEncoder(w).Encode(resp)

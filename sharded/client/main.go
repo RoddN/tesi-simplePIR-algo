@@ -71,7 +71,7 @@ func main() {
 		M:          hint.NumBlocks,
 		Shards:     len(hint.H),
 		HBytes:     int64(len(hint.H)) * int64(p.L*p.N*p.Logq/8),
-		ABytes:     int64(len(hint.Seed.Seed)),
+		ABytes:     int64(p.M * p.N * p.Logq / 8),
 		ATime:      aTime,
 		WarmupRuns: sharded.WarmupRuns,
 		Setup:      hint.Stats,
@@ -89,13 +89,24 @@ func doQuery(pi pir.SimplePIR, hint sharded.Hint, A pir.State, blocks [][]byte) 
 	col := uint64(idx % hint.ShardSize)
 	run := metrics.Run{Block: uint64(idx)}
 
+	p := hint.Params
 	start := time.Now()
 
-	secret, q := pi.Query(col, A, hint.Params, hint.Info)
+	queries := make([]pir.Msg, len(hint.H))
+	secrets := make([]pir.State, len(hint.H))
+	for j := range queries {
+		if j == shard {
+			secrets[j], queries[j] = pi.Query(col, A, p, hint.Info)
+		} else {
+			// Query a zero: si toglie Δ (mod 2^logq) da una query per l'indice 0
+			secrets[j], queries[j] = pi.Query(0, A, p, hint.Info)
+			queries[j].Data[0].AddAt((1<<p.Logq)-p.Delta(), 0, 0)
+		}
+	}
 	run.Query = time.Since(start)
 
 	var body bytes.Buffer
-	if err := gob.NewEncoder(&body).Encode(q); err != nil {
+	if err := gob.NewEncoder(&body).Encode(sharded.Request{Queries: queries}); err != nil {
 		return run, err
 	}
 	run.UploadBytes = body.Len()
@@ -125,7 +136,7 @@ func doQuery(pi pir.SimplePIR, hint sharded.Hint, A pir.State, blocks [][]byte) 
 
 	start = time.Now()
 
-	block := blockpir.DecodeBlock(blockpir.DecodeAnswer(hint.Params, hint.Info, hint.H[shard], q, resp.Answers[shard], secret, hint.K))
+	block := blockpir.DecodeBlock(blockpir.DecodeSum(p, hint.Info, hint.H, queries, resp.Answer, secrets, hint.K))
 	run.Decode = time.Since(start)
 
 	if !bytes.Equal(block, blocks[idx]) {

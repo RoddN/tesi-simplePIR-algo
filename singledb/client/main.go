@@ -70,7 +70,7 @@ func main() {
 		M:          hint.M,
 		Shards:     1,
 		HBytes:     int64(p.L * p.N * p.Logq / 8),
-		ABytes:     int64(len(hint.Seed.Seed)),
+		ABytes:     int64(p.M * p.N * p.Logq / 8),
 		ATime:      aTime,
 		WarmupRuns: singledb.WarmupRuns,
 		Setup:      hint.Stats,
