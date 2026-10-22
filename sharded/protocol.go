@@ -19,14 +19,8 @@ type Hint struct {
 	Stats     metrics.SetupStats
 }
 
-// Una query per shard: quella vera per lo shard del blocco, query a zero per gli altri
-type Request struct {
-	Queries []pir.Msg
-}
-
-// Somma delle risposte di tutti gli shard
 type Response struct {
-	Answer     pir.Msg
+	Answers    []pir.Msg
 	ServerTime time.Duration
 }
 
